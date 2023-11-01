@@ -1,0 +1,398 @@
+    <link href="css/datatables.min.css?{{ time }}" rel="stylesheet" type="text/css"/>
+    <link href="css/jquery.dataTables.min.css?{{ time }}" rel="stylesheet" type="text/css"/>
+    <link href="datepicker/css/datepicker.css?{{ time }}" rel="stylesheet" type="text/css"/>
+    <link href="css/custom.css?{{ time }}" rel="stylesheet" type="text/css"/>
+
+    <script src="js/jquery-3.3.1.min.js?{{ time }}" type="text/javascript"></script>
+    <script src="js/serialize.js?{{ time }}" type="text/javascript"></script>
+
+    <script src="datatables/js/jquery.dataTables.js?{{ time }}" type="text/javascript"></script>
+
+    <script src="datepicker/js/datepicker.js?{{ time }}" type="text/javascript"></script>
+
+    <script>
+        $(document).ready(function() {
+            let loader = $('.js-response-loader'),
+                editModal = $('#edit-person'),
+                deleteModal = $('#delete-person'),
+                now = new Date()
+            ;
+
+            $('.js-datepicker').datepicker({
+                autoclose: true,
+                format: 'yyyy-mm-dd',
+                endDate: new Date(now.getFullYear() - 18, now.getMonth(), now.getDay()),
+            });
+
+            $('.js-datatable').DataTable({
+                'pageLength': 500,
+                'ordering'  : true,
+                'searching' : true,
+                'paging'    : false,
+                'info'      : false,
+                'order'     : [[0, 'asc']],
+                'columnDefs': [
+                    {
+                        'targets': [5],
+                        'visible': false
+                    },
+                    {
+                        'targets': [6,7],
+                        'orderable': false,
+                    }
+                ],
+            });
+
+            $('.js-add-new-person').on('click', function () {
+                editModal.modal().show();
+                clearForm();
+            });
+
+            $('.js-edit').on('click', function () {
+                loader.show();
+                clearForm();
+                let id = $(this).data('id');
+
+                $.ajax({
+                    type: 'GET',
+                    dataType: 'json',
+                    data: {
+                        id: id,
+                    },
+                    url: 'http://yii2test.lan/index.php?r=test/person-data-load',
+                    success: function (response) {
+                        loader.hide();
+                        if (!response.id) {
+                            return false;
+                        }
+                        editModal.modal().show();
+
+                        editModal.find('.js-id').val(response.id);
+                        editModal.find('.js-firstname').val(response.firstname);
+                        editModal.find('.js-lastname').val(response.lastname);
+                        editModal.find('.js-email').val(response.email);
+                        editModal.find('.js-birthday').val(response.birthday);
+                        fillPhoneNumbers(response.phones)
+                    }
+                });
+            });
+
+            $('.js-delete').on('click', function () {
+                $('.js-delete-person').data('id', $(this).data('id'));
+                deleteModal.modal().show();
+
+                console.log($('.js-delete-person').data('id'));
+            });
+
+            $('.js-delete-person').on('click', function () {
+                loader.show();
+                $.ajax({
+                    type: 'POST',
+                    dataType: 'json',
+                    data: {
+                        id: $('.js-delete-person').data('id'),
+                    },
+                    url: 'http://yii2test.lan/index.php?r=test/person-data-delete',
+                    success: function (response) {
+                        location.reload();
+                    }
+                });
+            });
+
+            $('.js-update').on('click', function () {
+                if (validateFirstname() === false || validateEmail() === false || validatePhoneNumbers() === false) {
+                    return false;
+                }
+
+                loader.show();
+                $.ajax({
+                    type: 'POST',
+                    dataType: 'json',
+                    data: {
+                        form: $('.js-edit-person').serializeObject(),
+                    },
+                    url: 'http://yii2test.lan/index.php?r=test/person-data-save',
+                    success: function (response) {
+                        if (response.status) {
+                            location.reload();
+                        } else {
+                            alert(response.text_message ? response.text_message : ':( Something went wrong!')
+                            loader.hide();
+                            errorHandler(response);
+                        }
+                    }
+                });
+            });
+
+            $(document).on('click', '.js-remove-phonenumber', function () {
+                let $elem = $(this).prev();
+                $elem.parent().remove();
+            });
+
+            $(document).on('keyup', 'input[name="phonenumber[]"]', function () {
+                validatePhoneNumber($(this));
+            });
+            $(document).bind('paste', 'input[name="phonenumber[]"]', function () {
+                validatePhoneNumber($(this));
+            });
+            $('.js-firstname').on('keyup', function () {
+                validateFirstname();
+            });
+            $('.js-email').on('keyup', function () {
+                validateEmail();
+            });
+
+            $('#add-another-phonenumber').on('click', function () {
+                addNewPhonenumberField();
+            });
+
+            function validatePhoneNumber($this) {
+                $this.val($this.val().replace(/[^+0-9]/g, ''));
+                match = $this.val().match(/[0-9]/g);
+                length = match ? match.length : 0;
+                if (length < 10 || length > 13) {
+                    $this.addClass('alert-field');
+
+                    return false;
+                }
+                $this.removeClass('alert-field');
+                return true;
+            }
+            function validatePhoneNumbers() {
+                elements = $(document).find('input[name="phonenumber[]"]');
+                for (i = 0; i <= (elements.length - 1); i++) {
+                    let $this = $(elements[i]);
+                    if (!$this.prop("disabled")) {
+                        if (validatePhoneNumber($this) === false) {
+                            return false;
+                        }
+                    }
+                }
+            }
+            function validateEmail() {
+                reexp = /^\b[A-Z0-9._%-]+@[A-Z0-9.-]+\.[A-Z]{2,4}\b$/i
+                if (!reexp.test($('.js-email').val())) {
+                    $('.js-email').addClass('alert-field');
+
+                    return false;
+                }
+                $('.js-email').removeClass('alert-field');
+            }
+            function validateFirstname() {
+                val = $('.js-firstname').val();
+                if (!val.trim()) {
+                    $('.js-firstname').val('');
+                    $('.js-firstname').addClass('alert-field');
+
+                    return false;
+                }
+                $('.js-firstname').removeClass('alert-field');
+            }
+            function addNewPhonenumberField() {
+                let $template = $('#phonenumber-field-template'),
+                    $clone = $template.clone(),
+                    $field = $clone.find('[name="phonenumber[]"]')
+                ;
+
+                $clone.removeAttr('id')
+                    .removeClass('hide')
+                    .addClass('cloned-phonenumber')
+                ;
+
+                $field.val('').removeAttr("disabled");
+                $template.before($clone);
+
+                return $field;
+            }
+            function errorHandler(response) {
+                if (response.too_young) {
+                    $('.js-birthday').addClass('alert-field');
+                }
+                if (response.empty_firstname) {
+                    $('.js-firstname').addClass('alert-field');
+                }
+                if (response.invalid_email) {
+                    $('.js-email').addClass('alert-field');
+                }
+                if (response.empty_numbers) {
+                    $('.js-phonenumber').addClass('alert-field');
+                }
+
+                if (response.duplicate_phone) {
+                    $.each($(document).find('input[name="phonenumber[]"]'), function (k, e) {
+                        if ($(e).val().trim() === response.duplicate_phone) {
+                            $(e).addClass('alert-field');
+                        }
+                    });
+                }
+            }
+            function fillPhoneNumbers(phones) {
+                $(document).find('.cloned-phonenumber').remove();
+
+                $.each(phones, function (k, phone) {
+                    if (k == 0) {
+                        editModal.find('.js-phonenumber').val(phone.number)
+                    } else {
+                        field = addNewPhonenumberField();
+                        $(field).val(phone.number);
+                    }
+                });
+            }
+            function clearForm() {
+                editModal.find('.js-id').val('');
+                editModal.find('.js-firstname').val('');
+                editModal.find('.js-lastname').val('');
+                editModal.find('.js-email').val('');
+                editModal.find('.js-birthday').val('');
+                editModal.find('.js-phonenumber').val('')
+                $(document).find('.cloned-phonenumber').remove();
+            }
+        });
+    </script>
+
+    <div class="js-response-loader loader-cover container-loader" id="loader" style="display: none;">
+        <div class="css-loader-circle"></div>
+    </div>
+    <div class="body">
+
+        <div class="row">
+            <div class="col-sm-2">
+                <button class="btn btn-primary js-add-new-person">Add new</button>
+            </div>
+        </div>
+
+        <table class="js-datatable dataTable">
+            <thead>
+                <tr>
+                    <th>first name</th>
+                    <th>last name</th>
+                    <th>Email</th>
+                    <th>birthday</th>
+                    <th>phone number</th>
+                    <th></th>
+                    <th></th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for person in persons %}
+                    <tr>
+                        <td>{{ person.firstname }}</td>
+                        <td>{{ person.lastname }}</td>
+                        <td>{{ person.email }}</td>
+                        <td>{{ person.birthday }}</td>
+                        <td>{{ person.phones[0] is defined ? person.phones[0].number : '' }}{{ person.phones[1] is defined ? ', ...' : '' }}</td>
+                        <td>
+                            {% for phone in person.phones %}
+                                {{ phone.number }},
+                            {% endfor %}
+                        </td>
+                        <td><button class="btn btn-primary js-edit" data-id="{{ person.id }}">Edit</button></td>
+                        <th><button class="btn btn-danger js-delete" data-id="{{ person.id }}">Delete</button></th>
+                    </tr>
+                {% endfor %}
+            </tbody>
+
+        </table>
+    </div>
+
+    <!--MODAL EDIT PERSON-->
+    <div class="modal fade in delete" id="edit-person" tabindex="-1" role="dialog" aria-labelledby="ultraModal-Label" aria-hidden="true">
+        <div class="modal-dialog animated bounceInUp">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+                </div>
+                <div class="modal-body">
+                    <form class="edit-person-form js-edit-person">
+                        <input class="js-id" name="id" type="text" style="display: none;">
+                        <div class="row">
+                            <div class="col-sm-4">
+                                Firstname:
+                            </div>
+                            <div class="col-sm-8">
+                                <input class="form-control js-firstname" name="firstname" type="text">
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-sm-4">
+                                Lastname:
+                            </div>
+                            <div class="col-sm-8">
+                                <input class="form-control js-lastname" name="lastname" type="text">
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-sm-4">
+                                Email:
+                            </div>
+                            <div class="col-sm-8">
+                                <input class="form-control js-email" name="email" type="text">
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-sm-4">
+                                Birthday:
+                            </div>
+                            <div class="col-sm-8">
+                                <input class="form-control js-birthday js-datepicker" name="birthday">
+                            </div>
+                        </div>
+
+                        <div class="js-add-phone-number">
+                            <div class="row js-phonenumbers-list">
+                                <div class="col-sm-4">
+                                    Phone number:
+                                </div>
+                                <div class="col-sm-8 top15">
+                                    <input class="form-control js-phonenumber" name="phonenumber[]" placeholder="+380123456789 or 0123456789" type="text">
+                                </div>
+                            </div>
+                            <div class="col-sm-8 hide pull-right" id="phonenumber-field-template">
+                                <input class="form-control" style="width: 85%;" name="phonenumber[]" placeholder="+380123456789 or 0123456789" type="text" disabled>
+                                <span class="js-remove-phonenumber remove-phonenumber pull-right btn btn-sm btn-danger">x</span>
+                            </div>
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <span class="add-phonenumber pull-left btn btn-sm btn-primary square-add" id="add-another-phonenumber">
+                                        + Add number
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="modal-footer">
+                    <button data-dismiss="modal" class="btn btn-default" type="button">Cancel</button>
+                    <button class="btn btn-primary js-update" type="button">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!--/MODAL EDIT PERSON-->
+
+    <!--MODAL DELETE PERSON-->
+    <div class="modal fade in delete" id="delete-person" tabindex="-1" role="dialog" aria-labelledby="ultraModal-Label" aria-hidden="true">
+        <div class="modal-dialog modal-delete-person animated bounceInUp">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+                </div>
+                <div class="modal-body">
+                    <div class="modal-img">
+                        <img src="images/delete.png" alt="">
+                    </div>
+                    <div class="title">Do you want to delete it?</div>
+                </div>
+                <div class="modal-footer">
+                    <button data-dismiss="modal" class="btn btn-default" type="button">Cancel</button>
+                    <button class="btn btn-primary js-delete-person" type="button">Yes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!--/MODAL DELETE PERSON-->

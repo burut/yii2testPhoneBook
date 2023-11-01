@@ -1,0 +1,146 @@
+
+.loader-cover.container-loader .css-loader-circle {
+    border: 5px solid #fff;
+}
+.css-loader-circle {
+    z-index: 2;
+    border-radius: 40px;
+    height: 40px;
+    left: 50%;
+    margin: -20px 0 0 -20px;
+    opacity: 0;
+    position: absolute;
+    top: 50%;
+    width: 40px;
+    animation: pulsate 1s ease-out;
+    animation-iteration-count: infinite;
+}
+@keyframes pulsate {
+    0% {
+        transform: scale(.1);
+        opacity: 0.0;
+    }
+    50% {
+        opacity: 1;
+    }
+    100% {
+        transform: scale(1.2);
+        opacity: 0;
+    }
+}
+
+.loader-cover.container-loader {
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 99998;
+    position: fixed;
+}
+.loader-cover {
+    width: 100%;
+    height: 100%;
+    z-index: 6;
+    display: none;
+    position: absolute;
+    left: 0;
+    top: 0;
+}
+
+.form-control {
+    display: block;
+    width: 100%;
+    height: 34px;
+    padding: 6px 12px;
+    font-size: 14px;
+    line-height: 1.42857143;
+    color: #555;
+    background-color: #fff;
+    background-image: none;
+    border: 1px solid #eaeaea;
+    border-radius: 0px;
+    box-shadow: none;
+}
+
+.cloned-phonenumber .form-control {
+    display: inline-block;
+}
+.edit-person-form .row, .cloned-phonenumber {padding-bottom: 5px;}
+
+.pull-left {
+    float: left;
+}
+.pull-right {
+    float: right;
+}
+.hide {display: none;}
+
+.btn-sm {font-size: 0.5rem;}
+
+.remove-phonenumber {
+    margin-top: 8px;
+}
+
+.alert-field {
+    border-color: #FF0000;
+    box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 8px rgba(255, 0, 0, 0.6);
+}
+
+.delete .modal-dialog.modal-delete-person {
+    position: relative;
+    width: 400px;
+    margin: 12% auto 0;
+    max-width: 90%;
+}
+.delete .modal-header {
+    border-bottom: 0px;
+    padding-bottom: 0px;
+}
+.modal-header {
+    min-height: 16.42857143px;
+    padding: 15px;
+    border-bottom: 1px solid #e5e5e5;
+}
+.delete .modal-body {
+    top: 0px;
+    padding-top: 0px;
+}
+.modal-delete-person .modal-body {
+    padding: 20px;
+    position: relative;
+    top: 0px;
+}
+.delete .modal-img {
+    margin: auto;
+    width: 100px;
+    height: 100px;
+}
+.modal-img {
+    height: 250px;
+    overflow: hidden;
+    position: relative;
+    width: 100%;
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+}
+.delete .modal-img img {
+    width: 100%;
+}
+.delete .modal-body .title {
+    text-align: center;
+    color: #8f8f8f;
+    font-size: 18px;
+    font-weight: 400;
+    line-height: 27px;
+    margin: 20px auto 0px;
+}
+.delete .modal-footer {
+    border-top: none;
+    padding-bottom: 20px;
+    text-align: center;
+    padding: 15px;
+    display: flow-root;
+}
+.btn-default {
+    border-color: #ddd;
+    color: #8f8f8f;
+}
+
+.sorting:after,.sorting_asc:after,.sorting_desc:after {content: none !important;}
