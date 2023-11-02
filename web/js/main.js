@@ -135,7 +135,7 @@ $(document).ready(function() {
         $this.val($this.val().replace(/[^+0-9]/g, ''));
         match = $this.val().match(/[0-9]/g);
         length = match ? match.length : 0;
-        if (length < 10 || length > 13) {
+        if (length < 10 || length > 12) {
             $this.addClass('alert-field');
 
             return false;
