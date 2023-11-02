@@ -133,15 +133,18 @@ $(document).ready(function() {
 
     function validatePhoneNumber($this) {
         $this.val($this.val().replace(/[^+0-9]/g, ''));
-        match = $this.val().match(/[0-9]/g);
-        length = match ? match.length : 0;
-        if (length < 10 || length > 12) {
-            $this.addClass('alert-field');
+        let val = $this.val(),
+            match = val.match(/[0-9]/g),
+            matchPlus = val.match(/^\+/g),
+            length = match ? match.length : 0;
+        ;
 
-            return false;
+        if ((!matchPlus && length === 10) || (matchPlus && length === 12)) {
+            $this.removeClass('alert-field');
+            return true;
         }
-        $this.removeClass('alert-field');
-        return true;
+        $this.addClass('alert-field');
+        return false;
     }
     function validatePhoneNumbers() {
         elements = $(document).find('input[name="phonenumber[]"]');
