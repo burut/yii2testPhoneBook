@@ -1,4 +1,3 @@
-
 .loader-cover.container-loader .css-loader-circle {
     border: 5px solid #fff;
 }
@@ -44,26 +43,6 @@
     top: 0;
 }
 
-.form-control {
-    display: block;
-    width: 100%;
-    height: 34px;
-    padding: 6px 12px;
-    font-size: 14px;
-    line-height: 1.42857143;
-    color: #555;
-    background-color: #fff;
-    background-image: none;
-    border: 1px solid #eaeaea;
-    border-radius: 0px;
-    box-shadow: none;
-}
-
-.cloned-phonenumber .form-control {
-    display: inline-block;
-}
-.edit-person-form .row, .cloned-phonenumber {padding-bottom: 5px;}
-
 .pull-left {
     float: left;
 }
@@ -76,11 +55,6 @@
 
 .remove-phonenumber {
     margin-top: 8px;
-}
-
-.alert-field {
-    border-color: #FF0000;
-    box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 8px rgba(255, 0, 0, 0.6);
 }
 
 .delete .modal-dialog.modal-delete-person {
@@ -133,7 +107,6 @@
 }
 .delete .modal-footer {
     border-top: none;
-    padding-bottom: 20px;
     text-align: center;
     padding: 15px;
     display: flow-root;
@@ -141,6 +114,11 @@
 .btn-default {
     border-color: #ddd;
     color: #8f8f8f;
+}
+
+#s2id_phone-number {
+    height: auto;
+    padding: unset;
 }
 
 .sorting:after,.sorting_asc:after,.sorting_desc:after {content: none !important;}

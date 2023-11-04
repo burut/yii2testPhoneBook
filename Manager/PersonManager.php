@@ -33,149 +33,79 @@ class PersonManager
 
     public function personDataLoad(int $id) :array
     {
-        return Person::find()->asArray()->with('phones')->where("id={$id}")->limit(1)->all()[0] ?? [];
+        $person = Person::find()->asArray()->with('phones')->where("id={$id}")->limit(1)->all()[0] ?? [];
+
+        $phones = [];
+        foreach ($person['phones'] as $phone) {
+            $phones[] = [
+                'id'   => $phone['number'],
+                'text' => $phone['number'],
+            ];
+        }
+        $person['phones'] = $phones;
+
+        return $person;
     }
 
-    public function personDataSave(array $data) :array
+    public function personDataSave(array $form) :bool
     {
-        $personId = (int) trim($data['id']);
-        $idNew = empty($personId);
-        $firstname = trim($data['firstname']);
-        $lastname = trim($data['lastname']);
-        $email = trim($data['email']);
-        $birthday = trim($data['birthday']);
-        $numbers = $data['phonenumber'] ?? [];
+        $isError = false;
 
-        $tooYoung = (time() - (18 * 365 * 24 * 60 * 60)) < strtotime($birthday . ' 00:00:00');
+        $personModel = $personModelOrig =  Person::findOne($form['Person']['id'] ?? 0);
 
-        if ($tooYoung || !$firstname || !$numbers || $isInvalidEmal = !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            $textMessage = $tooYoung ? 'This person is too young. must be at least 18 years old' : '';
-            $textMessage = !$firstname ? 'Firstname should not be empty' : $textMessage;
-            $textMessage = !$numbers ? 'Person must have at least one phone number' : $textMessage;
-            $textMessage = $isInvalidEmal ? 'Email is not valid' : $textMessage;
-
-            return [
-                'status'          => false,
-                'text_message'    => $textMessage,
-                'too_young'       => $tooYoung,
-                'empty_firstname' => !$firstname,
-                'empty_numbers'   => !$numbers,
-                'invalid_email'   => $isInvalidEmal,
-            ];
+        if (!$personModel) {
+            $personModel = new Person();
         }
 
-        if ($personId) {
-            $person = $personOrigin = Person::findOne($personId);
-            if (!$person) {
+        if ($personModel->load($form) && $personModel->validate()) {
+            $personModel->id = (int) $personModel->id;
+            $checkEmail = Person::find()->where("email=:email", [':email' => $personModel->email])->limit(1)->all()[0] ?? null;
 
-                return [
-                    'status'       => false,
-                    'text_message' => 'this person is not in the DB',
-                ];
+            if ($checkEmail && (!$personModel->id || $personModel->id !== $checkEmail->id)) {
+                $isError = true;
             }
-        } else {
-            $person = new Person();
-        }
 
-        $checkEmailPerson = Person::find()->where("email=:email", [':email' => $email])->limit(1)->all()[0] ?? null;
+            if (!$isError) {
+                $personModel->save();
 
-        if ($checkEmailPerson && $checkEmailPerson->id !== $personId) {
-            return [
-                'status'        => false,
-                'text_message'  => 'Person email not added. Probably already in use',
-                'invalid_email' => true,
-            ];
-        }
+                $checkPhones = Phone::find()->where("person_id != {$personModel->id} AND number IN ({$form['numbersRaw']})")
+                    ->asArray()->all()
+                ;
 
-        $person->firstname = $firstname;
-        $person->lastname = $lastname;
-        $person->email = $email;
-        $person->birthday = $birthday;
-
-        $existsNumbers = [];
-        /** @var Phone $phone */
-        foreach ($person->phones as $phone) {
-            $existsNumbers[] = $phone;
-        }
-
-        $newPhones = [];
-        foreach ($numbers as $number) {
-            $number = trim($number);
-            if (!in_array($number, $existsNumbers, true)) {
-                $phone = Phone::find()->where("number='{$number}'")->limit(1)->all()[0] ?? null;
-                if ($phone && $phone->person_id !== $personId) {
-
-                    return [
-                        'status'          => false,
-                        'text_message'    => 'Phone number not added. Probably already in use',
-                        'duplicate_phone' => $number,
-                    ];
+                if ($checkPhones) {
+                    $isError = true;
                 }
 
-                if (!$phone) {
-                    preg_match('/^\+{0,1}(?:[0-9]?){6,14}[0-9]$/', $number, $q);
-                    if ($q) {
-                        $newPhone = new Phone();
-                        $newPhone->number = $number;
+                if (!$isError) {
+                    $phonesOrig = Phone::findAll(['person_id' => $personModel->id]);
+                    Phone::deleteAll(['person_id' => $personModel->id]);
+                    foreach ($form['Phones'] as $phone) {
+                        $phoneModel = new Phone();
 
-                        $newPhones[] = $newPhone;
+                        $phone['Phone']['person_id'] = $personModel->id;
+
+                        $phoneModel->load($phone);
+                        if ($phoneModel->validate()) {
+                            $phoneModel->save();
+                        } else {
+                            Phone::deleteAll(['person_id' => $personModel->id]);
+                            foreach ($phonesOrig as $phoneOrig) {
+                                $phoneOrig->save();
+                            }
+                            $isError = true;
+
+                            break;
+                        }
                     }
                 }
             }
         }
 
-        /** @var Phone $phone */
-        foreach ($person->phones as $phone) {
-            if (!in_array($phone->number, $numbers, true)) {
-                $phone->delete();
-            }
+        if ($isError && !$personModelOrig) {
+            $personModel->delete();
         }
 
-        if (!$newPhones && !$personId) {
-
-            return [
-                'status'       => false,
-                'text_message' => 'Phone number not added.Probably already in use',
-            ];
-        }
-
-        if (!$personId) {
-            $person->save();
-            $personId = $person->id;
-        }
-
-        /** @var Phone $phone */
-        foreach ($newPhones as $phone) {
-            $phone->person_id = $personId;
-            $phone->save();
-        }
-
-        $person->save();
-
-        $person = Person::findOne($personId);
-        if (!$idNew && !$person->phones) {
-            $personOrigin->save();
-
-            foreach ($personOrigin->phones as $phone) {
-                $phone->save();
-            }
-
-            return [
-                'status'       => false,
-                'text_message' => 'Errors in phone numbers',
-            ];
-        }
-
-        if ($person && !$person->phones) {
-            $person->delete();
-
-            return [
-                'status'       => false,
-                'text_message' => 'Person was deleted, because there is no phone numbers/',
-            ];
-        }
-
-        return ['status' => true];
+        return $isError;
     }
 
     public function personDataDelete(int $personId) :void
@@ -185,5 +115,29 @@ class PersonManager
         if ($person) {
             $person->delete();
         }
+    }
+
+    public function getPreparedPostForm($form) :array
+    {
+        if (!isset($form['Person'])) {
+            return [];
+        }
+        $personId = $form['Person']['id'] ?? null;
+        $numbers = explode(',', $form['Phone']['number'] ?? '') ;
+        $phoneForm = [];
+
+        $numbersRaw = [];
+        foreach ($numbers as $number) {
+            $phoneForm[]['Phone'] = [
+                'person_id' => $personId,
+                'number'    => $number,
+            ];
+            $numbersRaw[] = "'{$number}'";
+        }
+
+        $form['Phones'] = $phoneForm;
+        $form['numbersRaw'] = implode(',', $numbersRaw);
+
+        return $form;
     }
 }
