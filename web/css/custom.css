@@ -121,4 +121,6 @@
     padding: unset;
 }
 
+li.select2-results__option--selected {display: none;}
+
 .sorting:after,.sorting_asc:after,.sorting_desc:after {content: none !important;}

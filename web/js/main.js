@@ -12,26 +12,32 @@ $(document).ready(function() {
     });
 
     function initPhonenumbers(phones) {
-        $('#phone-number').select2('destroy').select2({
+        $('#phone-number option').remove();
+        $('#phone-number').select2({
             tags: true,
             tokenSeparators: [',', ' '],
-            createSearchChoice: function (term, data) {
-                if ($(data).filter(function () {
-                    return this.text.localeCompare(term) === 0;
-                }).length === 0 && validatePhoneNumber(term)) {
-                    return {
-                        id: validatePhoneNumber(term),
-                        text: validatePhoneNumber(term)
-                    };
+            minimumResultsForSearch: -1,
+            createTag: function (params) {
+                val = validatePhoneNumber(params.term);
+                if (!val) {
+                    return null;
+                }
+                return {
+                    id: val,
+                    text: val
                 }
             },
-        }).select2('data', phones, true);
+        });
+
+        $(phones).each(function (e, v) {
+            newOption = new Option(v.text, v.id, true, true);
+            $('#phone-number').append(newOption).trigger('change');
+        });
     }
 
     function validatePhoneNumber(value) {
-        value = value.replace(/[^+0-9]/g, '');
-        let
-            match = value.match(/[0-9]/g),
+        value = value.trim().replace(/[^+0-9]/g, '');
+        let match = value.match(/[0-9]/g),
             matchPlus = value.match(/^\+/g),
             length = match ? match.length : 0
         ;

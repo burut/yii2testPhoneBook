@@ -6,14 +6,16 @@ use yii\helpers\Html;
     <link href="css/datatables.min.css?<?php echo time() ?>" rel="stylesheet" type="text/css"/>
     <link href="css/jquery.dataTables.min.css?<?php echo time() ?>" rel="stylesheet" type="text/css"/>
     <link href="datepicker/css/datepicker.css?<?php echo time() ?>" rel="stylesheet" type="text/css"/>
-    <link href="css/select2.css?<?php echo time() ?>" rel="stylesheet" type="text/css"/>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<!--    <link href="css/select2.css?--><?php //echo time() ?><!--" rel="stylesheet" type="text/css"/>-->
     <link href="css/custom.css?<?php echo time() ?>" rel="stylesheet" type="text/css"/>
 
     <script src="js/jquery-3.3.1.min.js?<?php echo time() ?>" type="text/javascript"></script>
     <script src="js/serialize.js?<?php echo time() ?>" type="text/javascript"></script>
     <script src="datatables/js/jquery.dataTables.js?<?php echo time() ?>" type="text/javascript"></script>
     <script src="datepicker/js/datepicker.js?<?php echo time() ?>" type="text/javascript"></script>
-    <script src="js/select2.min.js?<?php echo time() ?>" type="text/javascript"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<!--    <script src="js/select2.min.js?--><?php //echo time() ?><!--" type="text/javascript"></script>-->
     <script src="js/main.js?<?php echo time() ?>" type="text/javascript"></script>
 
     <div class="js-response-loader loader-cover container-loader" id="loader" style="display: none;">
@@ -79,7 +81,7 @@ use yii\helpers\Html;
                     <?= $form->field($personModel, 'lastname') ?>
                     <?= $form->field($personModel, 'email') ?>
                     <?= $form->field($personModel, 'birthday') ?>
-                    <?= $form->field($phoneModel, 'number') ?>
+                    <?= $form->field($phoneModel, 'number[]')->dropDownList([], ['multiple' => 'multiple']) ?>
                 </div>
 
                 <div class="modal-footer">

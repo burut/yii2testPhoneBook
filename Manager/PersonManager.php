@@ -123,7 +123,7 @@ class PersonManager
             return [];
         }
         $personId = $form['Person']['id'] ?? null;
-        $numbers = explode(',', $form['Phone']['number'] ?? '') ;
+        $numbers = $form['Phone']['number'];
         $phoneForm = [];
 
         $numbersRaw = [];
