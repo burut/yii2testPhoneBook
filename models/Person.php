@@ -11,6 +11,7 @@ class Person extends ActiveRecord
         return [
             ['id', 'integer'],
             [['firstname', 'email', 'birthday'], 'required'],
+            ['email', 'unique'],
             ['firstname', 'safe'],
             ['lastname', 'safe'],
             ['email', 'email'],

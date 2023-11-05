@@ -59,46 +59,31 @@ class PersonManager
 
         if ($personModel->load($form) && $personModel->validate()) {
             $personModel->id = (int) $personModel->id;
-            $checkEmail = Person::find()->where("email=:email", [':email' => $personModel->email])->limit(1)->all()[0] ?? null;
+            $personModel->save();
 
-            if ($checkEmail && (!$personModel->id || $personModel->id !== $checkEmail->id)) {
-                $isError = true;
-            }
-
-            if (!$isError) {
-                $personModel->save();
-
-                $checkPhones = Phone::find()->where("person_id != {$personModel->id} AND number IN ({$form['numbersRaw']})")
-                    ->asArray()->all()
-                ;
-
-                if ($checkPhones) {
-                    $isError = true;
-                }
-
-                if (!$isError) {
-                    $phonesOrig = Phone::findAll(['person_id' => $personModel->id]);
+            $phonesOrig = Phone::findAll(['person_id' => $personModel->id]);
+            Phone::deleteAll(['person_id' => $personModel->id]);
+            foreach ($form['Phones'] as $phone) {
+                $phoneModel = new Phone();
+                $phone['Phone']['person_id'] = $personModel->id;
+                $phoneModel->load($phone);
+                if ($phoneModel->validate()) {
+                    $phoneModel->save();
+                } else {
                     Phone::deleteAll(['person_id' => $personModel->id]);
-                    foreach ($form['Phones'] as $phone) {
-                        $phoneModel = new Phone();
-
-                        $phone['Phone']['person_id'] = $personModel->id;
-
-                        $phoneModel->load($phone);
-                        if ($phoneModel->validate()) {
-                            $phoneModel->save();
-                        } else {
-                            Phone::deleteAll(['person_id' => $personModel->id]);
-                            foreach ($phonesOrig as $phoneOrig) {
-                                $phoneOrig->save();
-                            }
-                            $isError = true;
-
-                            break;
-                        }
+                    foreach ($phonesOrig as $phoneOrig) {
+                        $phone = new Phone();
+                        $phone->person_id = $phoneOrig->person_id;
+                        $phone->number = $phoneOrig->number;
+                        $phone->save();
                     }
+                    $isError = true;
+
+                    break;
                 }
             }
+        } else {
+            $isError = true;
         }
 
         if ($isError && !$personModelOrig) {
